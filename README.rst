@@ -34,11 +34,18 @@ flutter_clean
 =============
 
 
-    Add a short description here!
+    Clean up flutter project build folder.
 
 
-A longer description of your project goes here...
+This program will run "flutter clean" in your project each folder.
 
+Install
+====
+`pip install git+https://github.com/biplobsd/flutter_clean.git`
+
+Usage
+====
+`python -m flutter_clean.skeleton`
 
 .. _pyscaffold-notes:
 

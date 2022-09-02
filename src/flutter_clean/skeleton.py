@@ -4,10 +4,10 @@ console script. To run this script uncomment the following lines in the
 ``[options.entry_points]`` section in ``setup.cfg``::
 
     console_scripts =
-         fibonacci = flutter_clean.skeleton:run
+         output = flutter_clean.skeleton:run
 
 Then run ``pip install .`` (or ``pip install -e .`` for editable mode)
-which will install the command ``fibonacci`` inside your current environment.
+which will install the command ``output`` inside your current environment.
 
 Besides console scripts, the header (i.e. until ``_logger``...) of this file can
 also be used as template for Python modules.
@@ -23,7 +23,10 @@ References:
 import argparse
 import logging
 import sys
-
+import os
+from subprocess import Popen
+from subprocess import PIPE
+from tqdm import tqdm
 from flutter_clean import __version__
 
 __author__ = "Biplob Sutradhar"
@@ -40,20 +43,21 @@ _logger = logging.getLogger(__name__)
 # when using this Python module as a library.
 
 
-def fib(n):
-    """Fibonacci example function
+def runFlutterClean(cwd=None):
+    """Run `flutter run`
 
     Args:
-      n (int): integer
+      cwd (str): string
 
     Returns:
-      int: n-th Fibonacci number
+      string: stdout
     """
-    assert n > 0
-    a, b = 1, 1
-    for _i in range(n - 1):
-        a, b = b, a + b
-    return a
+    return Popen(
+        'flutter clean',
+        shell=True, text=True,
+        stdout=PIPE,
+        bufsize=-1,
+        cwd=cwd).stdout.read()
 
 
 # ---- CLI ----
@@ -72,13 +76,15 @@ def parse_args(args):
     Returns:
       :obj:`argparse.Namespace`: command line parameters namespace
     """
-    parser = argparse.ArgumentParser(description="Just a Fibonacci demonstration")
+    parser = argparse.ArgumentParser(
+        description='Clean up flutter project build folder. This program will run "flutter clean" in your project each folder. ')
     parser.add_argument(
         "--version",
         action="version",
         version="flutter_clean {ver}".format(ver=__version__),
     )
-    parser.add_argument(dest="n", help="n-th Fibonacci number", type=int, metavar="INT")
+    parser.add_argument(
+        "--dir", nargs='?', default='.', help="The folder contain all your flutter projects. Default currect folder.", type=str)
     parser.add_argument(
         "-v",
         "--verbose",
@@ -123,7 +129,12 @@ def main(args):
     args = parse_args(args)
     setup_logging(args.loglevel)
     _logger.debug("Starting crazy calculations...")
-    print("The {}-th Fibonacci number is {}".format(args.n, fib(args.n)))
+    print("-"*20, flush=True)
+    for dir in tqdm(next(os.walk(args.dir))[1]):
+        fullPath = os.path.join(args.dir, dir)
+        print(fullPath, flush=True)
+        print(runFlutterClean(cwd=fullPath), flush=True)
+        print("-"*20, flush=True)
     _logger.info("Script ends here")
 
 
@@ -144,6 +155,6 @@ if __name__ == "__main__":
     # After installing your project with pip, users can also run your Python
     # modules as scripts via the ``-m`` flag, as defined in PEP 338::
     #
-    #     python -m flutter_clean.skeleton 42
+    #     python -m flutter_clean.skeleton
     #
     run()
